@@ -47,7 +47,6 @@ class Actor(Model):
         #평균값을 조절
         mu = Lambda(lambda x : x*self.action_bound)(mu)
         return [mu,std]
-
 class PPOAgent(object):
 
     def __init__(self, state_dim, action_dim, action_bound, std_bound):
@@ -71,14 +70,18 @@ class PPOAgent(object):
 
         return mu_a, std_a, action
 
+# ===== train region =====
+batch_state, batch_action,batch_reward = [],[],[]
+batch_log_old_policy_pdf = []
 
-agent = PPOAgent(4, 1, 100.0, [-1.0, 1.0])
+agent = PPOAgent(4, 1, 50.0, [1e-2, 1.0])
 
+
+# ========================
 print("... Complete Make PPO Model ...")
 
-
 HEADER = 1024
-PORT = 5052
+PORT = 5053
 SERVER = "127.0.0.1" # socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 FORMAT = 'utf-8'
@@ -93,7 +96,7 @@ def handle_client(connection, address):
     connected = True
     startState = False
     endState = False
-    states= []
+    states = []
     while connected:
         msg_length = connection.recv(HEADER).decode(FORMAT)
 
@@ -103,29 +106,29 @@ def handle_client(connection, address):
             texts = msg_length.split("/")
             # print(len(texts)," ", texts)
             for i in range(len(texts)):
-                if(texts[i] == ", "): pass
-                if (texts[i] == " ,"): pass
                 if (texts[i] == ""): pass
                 if(texts[i] == "state"):
                     startState = True
-                    states.clear()
+
                 if (startState and is_number(texts[i])):
                     states.append(float(texts[i]))
-                if(texts[i]=="end"):
+                if(texts[i]=="stateend"):
                     endState = True
                     startState = False
 
             # print(f"[{address}] {msg_length}")
             if(endState==True and startState == False):
-                #for i in range(len(states)):
-                    #print(f"{states[i]}")
+                for i in range(len(states)):
+                    print(f"{states[i]}")
                 endState = False
                 mu_old, std_old, action = agent.get_policy_action(tf.convert_to_tensor([states], dtype=tf.float32))
+                # connection.send(bytes("action/ ",'utf-8'))
                 sendMsgFloat(connection, action[0])
+                # sendMsgFloat(connection, action[1])
                 print(f"action {action}")
-                train(mu_old, std_old, action)
-            # ======= state ===========
+                states.clear()
 
+            # ======= state ===========
 
     connection.close()
 

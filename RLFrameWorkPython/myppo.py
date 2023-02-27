@@ -173,7 +173,7 @@ class PPOAgent(object):
             time,episode_reward,done = 0,0,False
             state = self.env.reset()
             state = state[0]
-            bFirstState = False
+
             while not done:
                 mu_old, std_old, action = self.get_policy_action(tf.convert_to_tensor([state], dtype=tf.float32))
                 print(f"행동 : {action}")
