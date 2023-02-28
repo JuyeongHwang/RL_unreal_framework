@@ -32,7 +32,6 @@ class Actor(Model):
 
         mu = self.mu(x)
         std = self.std(x)
-        print(f"actgion bound {self.action_bound}")
         #평균값을 조절
         mu = Lambda(lambda x : x*self.action_bound)(mu)
         return [mu,std]
@@ -72,7 +71,7 @@ class PPOAgent(object):
         self.state_dim = env.observation_space.shape[0] #3차원 (x,y,각속도)
         self.action_dim = env.action_space.shape[0] #1차원, 토크
         print(f"dim {self.action_dim}")
-        self.action_bound = env.action_space.high[0] #행동의 최대 크기. 2.0
+        self.action_bound = 10 #env.action_space.high[0] #행동의 최대 크기. 2.0
         self.std_bound = [1e-2, 1.0] #표준편차 standard derivation의 최솟값, 최댓값 설정
 
         #액터 신경망 및 크리틱 신경망 생성.
@@ -195,11 +194,12 @@ class PPOAgent(object):
                 #다음 상태, 보상 관측
 
                 next_state, reward,done,_,_ = self.env.step(action)
-
+                print(reward)
                 # shape 변환
                 state = np.reshape(state,[1,self.state_dim])
                 action = np.reshape(action,[1, self.action_dim])
                 reward = np.reshape(reward,[1,1])
+
                 log_old_policy_pdf = np.reshape(log_old_policy_pdf, [1,1])
                 '''
                 print("상태 : ",state)
