@@ -149,10 +149,10 @@ class PPOAgent(object):
         self.critic_opt.apply_gradients(zip(grads, self.critic.trainable_variables))
 
 # ===== train region =====
-action_bound =50
+action_bound = 100
 state_dim = 4
 action_dim = 1
-agent = PPOAgent(state_dim, action_dim, action_bound, [-100, 100])
+agent = PPOAgent(state_dim, action_dim, action_bound, [1e-3, 10])
 
 
 # ========================
