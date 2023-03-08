@@ -149,17 +149,17 @@ class PPOAgent(object):
         self.critic_opt.apply_gradients(zip(grads, self.critic.trainable_variables))
 
 # ===== train region =====
-action_bound = 100
+action_bound = 10
 state_dim = 4
 action_dim = 1
-agent = PPOAgent(state_dim, action_dim, action_bound, [1e-3, 10])
+agent = PPOAgent(state_dim, action_dim, action_bound, [1e-2, 1.0])
 
 
 # ========================
 print("... Complete Make PPO Model ...")
 
 HEADER = 1024
-PORT = 5054
+PORT = 5050
 SERVER = "127.0.0.1" # socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 FORMAT = 'utf-8'
@@ -234,6 +234,8 @@ def handle_client(connection, address):
             endState = False
             mu_old, std_old, action = agent.get_policy_action(tf.convert_to_tensor([state], dtype=tf.float32))
             action = np.clip(action, -action_bound, action_bound)
+
+            action = action*10
             # 이전 정책의 로그 확률밀도함수 계산
             var_old = std_old ** 2
             log_old_policy_pdf = -0.5 * (action - mu_old) ** 2 / var_old - 0.5 * np.log(var_old * 2 * np.pi)
@@ -257,7 +259,7 @@ def handle_client(connection, address):
             reward = np.reshape(reward, [1, 1])
             batch_reward.append(reward)
 
-        if (len(batch_state) > 63 and len(batch_reward) > 63):
+        if (len(batch_state) > 255 and len(batch_reward) > 255):
             print(f"==update network!==")
             connection.send(bytes("/Delay", 'utf-8'))
             # 배치가 채워지면 학습진행
@@ -278,7 +280,8 @@ def handle_client(connection, address):
             gaes, y_i = agent.gae_target(rewards, v_values.numpy(), next_v_value.numpy(), done)
 
             # epoch만큼 반복
-            for _ in range(10):
+            for _ in range(20):
+                print("===== update =====")
                 # 액터 신경망 업데이트
                 agent.actor_learn(tf.convert_to_tensor(log_old_policy_pdfs, dtype=tf.float32),
                                  tf.convert_to_tensor(states, dtype=tf.float32),

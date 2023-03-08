@@ -276,7 +276,7 @@ class PPOAgent(object):
 
 
 def main():
-    max_episode_num = 1
+    max_episode_num = 10
     env = gym.make('Pendulum-v1', render_mode = 'human')
 
     agent = PPOAgent(env)
